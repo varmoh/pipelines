@@ -82,7 +82,7 @@ function getInput(req) {
 }
 
 // Create a write stream (in append mode) for logging
-const logStream = fs.createWriteStream(path.join(path.dirname(new URL(import.meta.url).pathname), 'app.log'), { flags: 'a' });
+const logStream = fs.createWriteStream(path.join(path.dirname(new URL(import.meta.url).pathname), '../app.log'), { flags: 'a' });
 
 const logRequest = (message) => {
   console.log(message);
