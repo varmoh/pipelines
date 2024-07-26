@@ -1,7 +1,7 @@
 import express from "express";
-import morgan from "morgan"; // Import morgan
-import fs from 'fs';
-import path from 'path';
+import morgan from "morgan";
+import fs from "fs";
+import path from "path";
 import opensearch from "./pipelines/opensearch.js";
 
 const app = express();
@@ -18,10 +18,18 @@ app.disable('x-powered-by');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware for logging additional events
+// Middleware for logging additional events and data
 app.use((req, res, next) => {
-  console.log(`Received a ${req.method} request for ${req.url}`);
-  logStream.write(`Received a ${req.method} request for ${req.url}\n`);
+  const logData = {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body,
+    query: req.query
+  };
+  const logMessage = `Received a ${req.method} request for ${req.url} with data: ${JSON.stringify(logData)}`;
+  console.log(logMessage);
+  logStream.write(`${logMessage}\n`);
   next();
 });
 
