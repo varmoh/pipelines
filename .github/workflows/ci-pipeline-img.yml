@@ -32,7 +32,6 @@ jobs:
            echo "$GITHUB_ENV"
       - name: Docker Build
         run: | 
-           cd DSL/Pipelines
            docker image build -f Dockerfile --tag $DOCKER_TAG_CUSTOM .
 
       - name: Log in to GitHub container registry
