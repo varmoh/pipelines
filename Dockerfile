@@ -1,13 +1,14 @@
-FROM node:22-alpine
+FROM node:18
 
-RUN addgroup -S nonroot \
-    && adduser -S nonroot -G nonroot
-USER nonroot
-
-ENV NODE_ENV development
 WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm install
 
 COPY . .
 
-RUN npm install
-ENTRYPOINT ["npm","start"]
+EXPOSE 3010
+
+
+CMD ["npm", "start"]
