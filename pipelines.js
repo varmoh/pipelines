@@ -1,42 +1,52 @@
 import express from "express";
-import morgan from "morgan";
 import fs from "fs";
 import path from "path";
+import morgan from "morgan";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import opensearch from "./pipelines/opensearch.js";
 
 const app = express();
+
 const PORT = process.env.PORT || 3010;
 
-// Create a write stream (in append mode) for logging
-const logStream = fs.createWriteStream(path.join(path.dirname(new URL(import.meta.url).pathname), 'app.log'), { flags: 'a' });
+// Get the directory name
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Setup morgan to log requests to the console and to the file
-app.use(morgan('combined', { stream: logStream }));
-app.use(morgan('dev'));
+const logDirectory = path.join(__dirname, 'pipelines');
+
+// Ensure log directory exists and set permissions
+try {
+  if (!fs.existsSync(logDirectory)) {
+    fs.mkdirSync(logDirectory, { recursive: true });
+    fs.chmodSync(logDirectory, 0o777);
+  }
+
+  const logPath = path.join(logDirectory, 'app.log');
+  // Create the log file if it doesn't exist
+  if (!fs.existsSync(logPath)) {
+    fs.writeFileSync(logPath, '');
+  }
+  // Ensure the log file is writable
+  fs.chmodSync(logPath, 0o666);
+
+  // Create a write stream (in append mode)
+  const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+
+  // Setup morgan for logging
+  app.use(morgan('combined', { stream: logStream }));
+} catch (error) {
+  console.error('Failed to set up logging:', error);
+  process.exit(1);
+}
 
 app.disable('x-powered-by');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware for logging additional events and data
-app.use((req, res, next) => {
-  const logData = {
-    method: req.method,
-    url: req.url,
-    headers: req.headers,
-    body: req.body,
-    query: req.query
-  };
-  const logMessage = `Received a ${req.method} request for ${req.url} with data: ${JSON.stringify(logData)}`;
-  console.log(logMessage);
-  logStream.write(`${logMessage}\n`);
-  next();
-});
-
 app.use(opensearch);
 
 app.listen(PORT, () => {
-  const message = `${process.argv[1]} listening on port ${PORT}`;
-  console.log(message);
-  logStream.write(`${message}\n`);
+  console.log(`${process.argv[1]} listening on port ${PORT}`);
 });
